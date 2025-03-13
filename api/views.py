@@ -38,7 +38,7 @@ def parent_signup(request):
 User = get_user_model()
 @login_required(login_url="/login/")
 def create_child(request):
-    if not request.user.is_parent:
+    if not hasattr(request.user, "is_parent") or not request.user.is_parent:
         messages.error(request, "Only parents can create child accounts.")
         return redirect("dashboard")
 
@@ -46,9 +46,9 @@ def create_child(request):
         form = ChildCreateForm(request.POST)
         if form.is_valid():
             child_user = form.save(commit=False)
-            child_user.is_child = True
+            child_user.is_child = True  # Assuming you have an `is_child` field in User model
             child_user.save()
-            Child.objects.create(user=child_user, parent=request.user)
+            Child.objects.create(user=child_user, parent=request.user, age=request.age)
             messages.success(request, "Child account created successfully!")
             return redirect("dashboard")
     else:
@@ -69,6 +69,8 @@ class ChildViewSet(viewsets.ModelViewSet):
     permission_classes = [IsParent]
     authentication_classes = [TokenAuthentication]
 
+    def get_queryset(self):
+        return Child.objects.filter(parent=self.request.user)
     @action(detail=True, methods=['post'])
     def update_location(self, request, pk=None):
         child = self.get_object()

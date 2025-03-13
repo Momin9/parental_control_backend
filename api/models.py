@@ -29,6 +29,7 @@ class User(AbstractUser):
 class Child(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='child')
     parent = models.ForeignKey(User, on_delete=models.CASCADE, related_name='children')
+    age = models.PositiveIntegerField(default=0)
     last_location = models.JSONField(default=dict, blank=True, null=True)
 
     def __str__(self):

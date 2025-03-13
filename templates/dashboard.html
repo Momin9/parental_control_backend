@@ -29,6 +29,12 @@
             </a>
         </div>
 
+        <!-- Child List Section -->
+        <div class="mt-6">
+            <h3 class="text-lg font-semibold text-purple-300">Your Children</h3>
+            <ul id="children-list" class="mt-2 text-gray-300"></ul>
+        </div>
+
         <!-- Child's Live Location -->
         <div class="mt-6">
             <h3 class="text-lg font-semibold text-purple-300">Child's Live Location</h3>
@@ -54,7 +60,7 @@
             window.location.href = "/login/";
         }
 
-        async function fetchChildData() {
+        async function fetchChildren() {
             const token = localStorage.getItem("token");
             const response = await fetch("/api/children/", {
                 headers: {"Authorization": `Token ${token}`}
@@ -62,9 +68,21 @@
 
             if (response.ok) {
                 const data = await response.json();
-                document.getElementById("child-location").innerText = JSON.stringify(data);
+                const childrenList = document.getElementById("children-list");
+                childrenList.innerHTML = "";
+
+                if (data.length === 0) {
+                    childrenList.innerHTML = "<li class='text-gray-300'>No children found.</li>";
+                } else {
+                    data.forEach(child => {
+                        const li = document.createElement("li");
+                        li.className = "text-gray-300 border-b border-gray-600 pb-2";
+                        li.innerHTML = `<strong>${child.name}</strong> (ID: ${child.id}, Age: ${child.age})`;
+                        childrenList.appendChild(li);
+                    });
+                }
             } else {
-                alert("Failed to fetch child's location");
+                alert("Failed to fetch children data");
             }
         }
 
@@ -94,20 +112,7 @@
             window.location.href = "/login/";
         }
 
-        window.onload = fetchChildData;
-    </script>
-
-    <script>
-        const socket = new WebSocket("ws://localhost:8000/ws/live_location/");
-
-        socket.onmessage = function (event) {
-            const data = JSON.parse(event.data);
-            document.getElementById("child-location").innerText = `Latitude: ${data.latitude}, Longitude: ${data.longitude}`;
-        };
-
-        function requestLiveLocation() {
-            socket.send(JSON.stringify({request: "update_location"}));
-        }
+        window.onload = fetchChildren;
     </script>
 
 </body>
