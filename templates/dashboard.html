@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parent Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="flex items-center justify-center min-h-screen bg-gray-900 relative">
+    <div class="absolute w-80 h-80 bg-purple-600 opacity-30 rounded-full blur-3xl top-20 left-10"></div>
+    <div class="absolute w-96 h-96 bg-blue-600 opacity-20 rounded-full blur-3xl bottom-10 right-10"></div>
+
+    <!-- Dashboard Container -->
+    <div class="relative z-10 bg-white/10 backdrop-blur-lg p-10 rounded-3xl shadow-2xl border border-white/20 text-white w-full max-w-2xl">
+        <h2 class="text-center text-4xl font-extrabold text-white tracking-wide">Parent Dashboard</h2>
+
+        <!-- Logout Button -->
+        <button onclick="logout()"
+                class="absolute top-4 right-4 bg-red-500 px-4 py-2 rounded-md text-white hover:bg-red-600 transition">
+            Logout
+        </button>
+
+        <!-- Create Child Button -->
+        <div class="mt-6 flex justify-center">
+            <a href="{% url 'create_child' %}">
+                <button class="bg-green-500 hover:bg-green-600 text-white text-lg font-semibold px-6 py-3 rounded-xl shadow-lg transition-transform transform hover:scale-105">
+                    + Create Child
+                </button>
+            </a>
+        </div>
+
+        <!-- Child's Live Location -->
+        <div class="mt-6">
+            <h3 class="text-lg font-semibold text-purple-300">Child's Live Location</h3>
+            <p id="child-location" class="text-gray-300 mt-2">Fetching...</p>
+        </div>
+
+        <!-- Block a URL Section -->
+        <div class="mt-6">
+            <h3 class="text-lg font-semibold text-purple-300">Block a URL</h3>
+            <input type="text" id="child_id" placeholder="Enter Child ID"
+                   class="w-full bg-transparent border border-white/30 text-white placeholder-gray-300 p-3 mt-2 rounded-xl focus:ring-2 focus:ring-purple-400">
+            <input type="text" id="url" placeholder="Enter URL to Block"
+                   class="w-full bg-transparent border border-white/30 text-white placeholder-gray-300 p-3 mt-2 rounded-xl focus:ring-2 focus:ring-purple-400">
+            <button onclick="blockURL()"
+                    class="w-full mt-3 bg-gradient-to-r from-purple-500 to-blue-500 text-white text-lg font-semibold rounded-xl py-3 hover:scale-105 transition-transform shadow-lg">
+                Block URL
+            </button>
+        </div>
+    </div>
+
+    <script>
+        if (!localStorage.getItem("token")) {
+            window.location.href = "/login/";
+        }
+
+        async function fetchChildData() {
+            const token = localStorage.getItem("token");
+            const response = await fetch("/api/children/", {
+                headers: {"Authorization": `Token ${token}`}
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                document.getElementById("child-location").innerText = JSON.stringify(data);
+            } else {
+                alert("Failed to fetch child's location");
+            }
+        }
+
+        async function blockURL() {
+            const token = localStorage.getItem("token");
+            const url = document.getElementById("url").value;
+            const childId = document.getElementById("child_id").value;
+
+            const response = await fetch("/api/blocked_urls/", {
+                method: "POST",
+                headers: {
+                    "Authorization": `Token ${token}`,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({child: childId, url})
+            });
+
+            if (response.ok) {
+                alert("URL Blocked Successfully");
+            } else {
+                alert("Failed to block URL");
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem("token");
+            window.location.href = "/login/";
+        }
+
+        window.onload = fetchChildData;
+    </script>
+
+    <script>
+        const socket = new WebSocket("ws://localhost:8000/ws/live_location/");
+
+        socket.onmessage = function (event) {
+            const data = JSON.parse(event.data);
+            document.getElementById("child-location").innerText = `Latitude: ${data.latitude}, Longitude: ${data.longitude}`;
+        };
+
+        function requestLiveLocation() {
+            socket.send(JSON.stringify({request: "update_location"}));
+        }
+    </script>
+
+</body>
+</html>

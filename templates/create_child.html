@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Child Account</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="flex items-center justify-center min-h-screen bg-gray-900 relative overflow-hidden">
+    <!-- Background Gradient Effects -->
+    <div class="absolute w-96 h-96 bg-purple-600 opacity-40 rounded-full blur-3xl top-10 left-10 animate-pulse"></div>
+    <div class="absolute w-96 h-96 bg-blue-600 opacity-30 rounded-full blur-3xl bottom-10 right-10 animate-pulse"></div>
+    <div class="absolute w-72 h-72 bg-indigo-500 opacity-20 rounded-full blur-2xl top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"></div>
+
+    <!-- Main Container -->
+    <div class="relative z-10 bg-white/10 backdrop-blur-lg p-10 rounded-3xl shadow-2xl border border-white/20 text-white w-full max-w-md">
+        <h2 class="text-center text-4xl font-extrabold text-white tracking-wide mb-6">👨‍👦 Create Child Account</h2>
+
+        <!-- Form -->
+        <form method="post" class="space-y-6">
+            {% csrf_token %}
+
+            <!-- Username Field -->
+            <div>
+                <label for="id_username" class="block text-lg text-purple-300 font-semibold">Child Username</label>
+                <input type="text" name="username" id="id_username"
+                       class="w-full bg-gray-800 text-white placeholder-gray-400 p-3 mt-2 rounded-xl focus:ring-2 focus:ring-purple-400 border border-gray-600 outline-none"
+                       placeholder="Enter child's username" required>
+            </div>
+
+            <!-- Password Field -->
+            <div>
+                <label for="id_password" class="block text-lg text-purple-300 font-semibold">Password</label>
+                <input type="password" name="password" id="id_password"
+                       class="w-full bg-gray-800 text-white placeholder-gray-400 p-3 mt-2 rounded-xl focus:ring-2 focus:ring-purple-400 border border-gray-600 outline-none"
+                       placeholder="Enter child's password" required>
+            </div>
+
+            <!-- Submit Button -->
+            <div class="mt-6">
+                <button type="submit"
+                        class="w-full bg-gradient-to-r from-green-400 to-blue-500 text-white text-lg font-semibold rounded-xl py-3 hover:scale-105 transition-transform shadow-lg">
+                    ✅ Create Account
+                </button>
+            </div>
+        </form>
+
+        <!-- Back to Dashboard -->
+        <div class="mt-6 text-center">
+            <a href="{% url 'dashboard' %}"
+               class="text-purple-400 hover:text-purple-300 text-lg font-semibold transition transform hover:scale-105">
+                ← Back to Dashboard
+            </a>
+        </div>
+    </div>
+</body>
+</html>
