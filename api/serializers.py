@@ -10,9 +10,14 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class ChildSerializer(serializers.ModelSerializer):
+    name = serializers.SerializerMethodField()  # Remove the `source` argument
+
     class Meta:
         model = Child
-        fields = ['id', 'user', 'parent', 'last_location']
+        fields = ['id', 'name', 'parent', 'age', 'last_location']
+
+    def get_name(self, obj):  # Ensure the method name follows the pattern "get_<field_name>"
+        return f"{obj.user.first_name} {obj.user.last_name}"
 
 
 class BlockedURLSerializer(serializers.ModelSerializer):
