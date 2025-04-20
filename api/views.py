@@ -48,13 +48,18 @@ def create_child(request):
             child_user = form.save(commit=False)
             child_user.is_child = True  # Assuming you have an `is_child` field in User model
             child_user.save()
-            Child.objects.create(user=child_user, parent=request.user, age=request.age)
+
+            # Extract age from form.cleaned_data
+            age = form.cleaned_data.get("age", 0)
+            Child.objects.create(user=child_user, parent=request.user, age=age)
+
             messages.success(request, "Child account created successfully!")
             return redirect("dashboard")
     else:
         form = ChildCreateForm()
 
     return render(request, "create_child.html", {"form": form})
+
 
 
 class IsParent(permissions.BasePermission):
