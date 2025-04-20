@@ -9,10 +9,11 @@ class ParentSignupForm(UserCreationForm):
 
 class ChildCreateForm(forms.ModelForm):
     password = forms.CharField(widget=forms.PasswordInput, label="Password")
+    age = forms.IntegerField(min_value=0, label="Child's Age")
 
     class Meta:
         model = User
-        fields = ["username", "password"]
+        fields = ["username", "password", "age"]
 
     def save(self, commit=True):
         user = super().save(commit=False)
