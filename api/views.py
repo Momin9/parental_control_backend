@@ -1,14 +1,9 @@
-from asgiref.sync import async_to_sync
-from channels.layers import get_channel_layer
 from django.contrib import messages
 from django.contrib.auth import get_user_model, authenticate
 from django.contrib.auth import login
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse
-from django.shortcuts import get_object_or_404
 from django.shortcuts import render, redirect
-from django.views.decorators.csrf import csrf_exempt
 from rest_framework import viewsets, permissions
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.authtoken.models import Token
@@ -17,9 +12,33 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 
 from api.models import BlockedURL
-from api.serializers import ChildSerializer, BlockedURLSerializer, UserSerializer
+from api.serializers import BlockedURLSerializer, UserSerializer, ChildCreateSerializer
 from .forms import ParentSignupForm, ChildCreateForm
 from .models import Child
+
+
+class IsParentUser(permissions.BasePermission):
+    def has_permission(self, request, view):
+        return request.user.is_authenticated and request.user.is_parent
+
+
+class ChildCreateViewSet(viewsets.ModelViewSet):
+    queryset = Child.objects.all()
+    serializer_class = ChildCreateSerializer
+    permission_classes = [IsAuthenticated, IsParentUser]
+
+    def get_queryset(self):
+        return Child.objects.filter(parent=self.request.user)
+
+    def perform_create(self, serializer):
+        serializer.save()
+
+    @action(detail=True, methods=['post'])
+    def update_location(self, request, pk=None):
+        child = self.get_object()
+        child.last_location = request.data.get('location', {})
+        child.save()
+        return Response({'status': 'Location updated'})
 
 
 def parent_signup(request):
@@ -35,7 +54,10 @@ def parent_signup(request):
         form = ParentSignupForm()
     return render(request, "signup.html", {"form": form})
 
+
 User = get_user_model()
+
+
 @login_required(login_url="/login/")
 def create_child(request):
     if not hasattr(request.user, "is_parent") or not request.user.is_parent:
@@ -61,27 +83,12 @@ def create_child(request):
     return render(request, "create_child.html", {"form": form})
 
 
-
 class IsParent(permissions.BasePermission):
     def has_permission(self, request, view):
         return request.user.is_authenticated and request.user.is_parent
 
 
 # ViewSets
-class ChildViewSet(viewsets.ModelViewSet):
-    queryset = Child.objects.all()
-    serializer_class = ChildSerializer
-    permission_classes = [IsParent]
-    authentication_classes = [TokenAuthentication]
-
-    def get_queryset(self):
-        return Child.objects.filter(parent=self.request.user)
-    @action(detail=True, methods=['post'])
-    def update_location(self, request, pk=None):
-        child = self.get_object()
-        child.last_location = request.data.get('location', {})
-        child.save()
-        return Response({'status': 'Location updated'})
 
 
 class BlockedURLViewSet(viewsets.ModelViewSet):
@@ -92,6 +99,9 @@ class BlockedURLViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         return self.queryset.filter(parent=self.request.user)
+
+    def perform_create(self, serializer):
+        serializer.save(parent=self.request.user)
 
 
 # Authentication Views
@@ -116,21 +126,10 @@ class UserViewSet(viewsets.ModelViewSet):
 
         # ✅ Manually log in the user for session authentication
         login(request, user)
-
+        serialized_user = UserSerializer(user)
         token, created = Token.objects.get_or_create(user=user)
-        return Response({"token": token.key})
-
-
-@csrf_exempt
-def request_live_location(request):
-    if request.method == "POST":
-        channel_layer = get_channel_layer()
-        async_to_sync(channel_layer.group_send)(
-            "child_tracking", {"type": "request_location"}
-        )
-        return JsonResponse({"message": "Live location request sent"}, status=200)
-
-    return JsonResponse({"error": "Invalid request"}, status=400)
+        print(user)
+        return Response({"token": token.key, "user_data": serialized_user.data})
 
 
 def login_page(request):

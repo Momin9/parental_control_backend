@@ -32,3 +32,11 @@ urlpatterns = [
     path('', include('api.urls')),
 
 ]
+from django.http import HttpResponse
+
+def silent_websocket(request):
+    return HttpResponse(status=204)  # No content
+
+urlpatterns += [
+    path('websocket', silent_websocket),  # No slash to match /websocket exactly
+]

@@ -23,13 +23,13 @@ SECRET_KEY = 'django-insecure-ycppgfll!!!y)_i+3dud0^wg3pdli$lx%3dwvw!4qnk8(mi7d4
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
+APPEND_SLASH = False
 
 ALLOWED_HOSTS = ["*"]
 
 # Application definition
 AUTH_USER_MODEL = "api.User"
 INSTALLED_APPS = [
-    "daphne",  # Django Channels backend
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -40,7 +40,6 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'rest_framework.authtoken',
     'corsheaders',
-    "channels",
     'api',
     'django_extensions',
 ]
@@ -65,11 +64,6 @@ REST_FRAMEWORK = {
     ),
 }
 
-CHANNEL_LAYERS = {
-    "default": {
-        "BACKEND": "channels.layers.InMemoryChannelLayer",  # Use in-memory for testing
-    },
-}
 
 CORS_ALLOW_ALL_ORIGINS = True
 ROOT_URLCONF = 'parental_control_backend.urls'
@@ -91,7 +85,6 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'parental_control_backend.wsgi.application'
 ASGI_APPLICATION = "parental_control_backend.asgi.application"
 
 # Database
@@ -103,6 +96,12 @@ DATABASES = {
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
+CSRF_TRUSTED_ORIGINS = [
+    "https://7fa6-14-1-107-117.ngrok-free.app"
+]
+CORS_ALLOWED_ORIGINS = [
+    "https://7fa6-14-1-107-117.ngrok-free.app"
+]
 
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
