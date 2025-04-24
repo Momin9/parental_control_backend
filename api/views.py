@@ -1,5 +1,6 @@
 from django.contrib import messages
-from django.contrib.auth import get_user_model, authenticate
+from django.contrib.auth import authenticate
+from django.contrib.auth import get_user_model
 from django.contrib.auth import login
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
@@ -10,11 +11,37 @@ from rest_framework.authtoken.models import Token
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework_simplejwt.views import TokenObtainPairView
 
 from api.models import BlockedURL
 from api.serializers import BlockedURLSerializer, UserSerializer, ChildCreateSerializer
 from .forms import ParentSignupForm, ChildCreateForm
 from .models import Child
+
+User = get_user_model()
+
+
+class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+    def validate(self, attrs):
+        data = super().validate(attrs)
+
+        # Add user data to the token response
+        user = self.user
+        data['user'] = {
+            'id': user.id,
+            'username': user.username,
+            'email': user.email,
+            'first_name': user.first_name,
+            'last_name': user.last_name,
+            'is_parent': user.is_parent,
+        }
+
+        return data
+
+
+class CustomTokenObtainPairView(TokenObtainPairView):
+    serializer_class = CustomTokenObtainPairSerializer
 
 
 class IsParentUser(permissions.BasePermission):
@@ -36,6 +63,8 @@ class ChildCreateViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post'])
     def update_location(self, request, pk=None):
         child = self.get_object()
+        if not child or request.data.get('location') is None:
+            return Response({'message': 'Location is required', 'status': 400, 'error': True}, status=400)
         child.last_location = request.data.get('location', {})
         child.save()
         return Response({'status': 'Location updated'})

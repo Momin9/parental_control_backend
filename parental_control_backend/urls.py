@@ -17,7 +17,11 @@ Including another URLconf
 from django.contrib import admin
 from django.shortcuts import redirect
 from django.urls import path, include
-from rest_framework.authtoken.views import obtain_auth_token
+from rest_framework_simplejwt.views import (
+    TokenRefreshView,
+)
+
+from api.views import CustomTokenObtainPairView
 
 
 def root_redirect(request):
@@ -30,12 +34,16 @@ urlpatterns = [
     path('', root_redirect, name="root_redirect"),  # Redirect root to dashboard/login
     path('admin/', admin.site.urls),
     path('', include('api.urls')),
+    path('api/login/', CustomTokenObtainPairView.as_view(), name='custom_login'),
+    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 
 ]
 from django.http import HttpResponse
 
+
 def silent_websocket(request):
     return HttpResponse(status=204)  # No content
+
 
 urlpatterns += [
     path('websocket', silent_websocket),  # No slash to match /websocket exactly

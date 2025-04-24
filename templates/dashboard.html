@@ -5,21 +5,27 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Parent Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
 </head>
 <body class="flex items-center justify-center min-h-screen bg-gray-900 relative">
+
 <!-- Glowing Backgrounds -->
 <div class="absolute w-80 h-80 bg-purple-600 opacity-30 rounded-full blur-3xl top-20 left-10"></div>
 <div class="absolute w-96 h-96 bg-blue-600 opacity-20 rounded-full blur-3xl bottom-10 right-10"></div>
 
 <!-- Dashboard Container -->
-<div class="relative z-10 bg-white/10 backdrop-blur-lg p-10 rounded-3xl shadow-2xl border border-white/20 text-white w-full max-w-2xl">
-    <h2 class="text-center text-4xl font-extrabold text-white tracking-wide">Parent Dashboard</h2>
+<div class="relative z-10 bg-white/10 backdrop-blur-lg p-10 rounded-3xl shadow-2xl border border-white/20 text-white w-full h-full max-w-full flex flex-col justify-between">
 
-    <!-- Logout Button -->
-    <button onclick="logout()"
-            class="absolute top-4 right-4 bg-red-500 px-4 py-2 rounded-md text-white hover:bg-red-600 transition">
-        Logout
-    </button>
+    <!-- Header -->
+    <div class="flex justify-between items-center">
+        <h2 class="text-center text-4xl font-extrabold text-white tracking-wide">Parent Dashboard</h2>
+        <button onclick="logout()" class="bg-red-500 px-4 py-2 rounded-md text-white hover:bg-red-600 transition">
+            Logout
+        </button>
+    </div>
 
     <!-- Create Child Button -->
     <div class="mt-6 flex justify-center">
@@ -31,15 +37,9 @@
     </div>
 
     <!-- Children List -->
-    <div class="mt-6">
+    <div class="mt-6 flex-grow overflow-auto">
         <h3 class="text-lg font-semibold text-purple-300">Your Children</h3>
-        <ul id="children-list" class="mt-2 text-gray-300"></ul>
-    </div>
-
-    <!-- Child Location -->
-    <div class="mt-6">
-        <h3 class="text-lg font-semibold text-purple-300">Child's Live Location</h3>
-        <p id="child-location" class="text-gray-300 mt-2">Fetching...</p>
+        <ul id="children-list" class="mt-2 text-gray-300 space-y-6"></ul>
     </div>
 
     <!-- Block a URL Section -->
@@ -57,6 +57,17 @@
     </div>
 </div>
 
+<!-- Map Modal -->
+<div id="mapModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 hidden">
+    <div class="bg-white rounded-lg p-4 w-3/4">
+        <div class="flex justify-between items-center">
+            <h3 class="text-xl font-semibold">Child's Location</h3>
+            <button onclick="closeMapModal()" class="bg-red-500 px-4 py-2 rounded text-white">Close</button>
+        </div>
+        <div id="map" style="height: 400px; margin-top: 20px;"></div>
+    </div>
+</div>
+
 <!-- JavaScript Section -->
 <script>
     if (!localStorage.getItem("token")) {
@@ -66,7 +77,7 @@
     async function fetchChildren() {
         const token = localStorage.getItem("token");
         const response = await fetch("/api/children/", {
-            headers: {"Authorization": `Token ${token}`}
+            headers: { "Authorization": `Token ${token}` }
         });
 
         const childrenList = document.getElementById("children-list");
@@ -79,19 +90,44 @@
             } else {
                 data.forEach(child => {
                     const li = document.createElement("li");
-                    li.className = "text-gray-300 border-b border-gray-600 pb-2";
+                    li.className = "text-gray-300 border-b border-gray-600 pb-4 mb-4";
+
+                    let locationHTML = "Not available";
+                    if (child.last_location && child.last_location.latitude && child.last_location.longitude) {
+                        const { latitude, longitude, address } = child.last_location;
+
+                        locationHTML = `
+                            ${address ? `<div class="text-sm text-gray-400 mb-1">${address}</div>` : ""}
+                            <button onclick="openGoogleMap(${latitude}, ${longitude})"
+                                class="mt-2 bg-blue-500 hover:bg-blue-600 text-white px-4 py-1 text-sm rounded">
+                                📍 Open Google Maps
+                            </button>
+                        `;
+                    }
+
                     li.innerHTML = `
-              <strong>${child.user.username}</strong>
-              (ID: ${child.id}, Age: ${child.age})
-              <br>
-              Last Location: ${JSON.stringify(child.last_location || {}, null, 2)}
-            `;
+                        <strong>${child.user.username}</strong>
+                        (ID: ${child.id}, Age: ${child.age})<br>
+                        Last Location:<br>${locationHTML}
+                    `;
+
                     childrenList.appendChild(li);
                 });
             }
         } else {
             alert("Failed to fetch children data");
         }
+    }
+
+    function openGoogleMap(latitude, longitude) {
+        // Open Google Maps in a new tab with the exact location
+        const googleMapsURL = `https://www.google.com/maps?q=${latitude},${longitude}`;
+        window.open(googleMapsURL, "_blank");
+    }
+
+    function closeMapModal() {
+        // Close the modal
+        document.getElementById('mapModal').classList.add('hidden');
     }
 
     async function blockURL() {
@@ -106,7 +142,7 @@
                 "Authorization": `Token ${token}`,
                 "Content-Type": "application/json"
             },
-            body: JSON.stringify({child: childId, url: url, parent: parentId})
+            body: JSON.stringify({ child: childId, url: url, parent: parentId })
         });
 
         if (response.ok) {
