@@ -123,8 +123,7 @@ class IsParent(permissions.BasePermission):
 class BlockedURLViewSet(viewsets.ModelViewSet):
     queryset = BlockedURL.objects.all()
     serializer_class = BlockedURLSerializer
-    permission_classes = [IsParent]
-    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsParent, IsAuthenticated]
 
     def get_queryset(self):
         return self.queryset.filter(parent=self.request.user)
@@ -137,7 +136,6 @@ class BlockedURLViewSet(viewsets.ModelViewSet):
 class UserViewSet(viewsets.ModelViewSet):
     queryset = get_user_model().objects.all()
     serializer_class = UserSerializer
-    authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
 
     @action(detail=False, methods=['post'], permission_classes=[AllowAny])

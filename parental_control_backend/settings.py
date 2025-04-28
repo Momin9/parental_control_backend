@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-ycppgfll!!!y)_i+3dud0^wg3pdli$lx%3dwvw!4qnk8(mi7d4
 DEBUG = True
 APPEND_SLASH = False
 
-ALLOWED_HOSTS = ["*"]
+ALLOWED_HOSTS = ["*", 'parentify.org', 'www.parentify.org']
 
 # Application definition
 AUTH_USER_MODEL = "api.User"
