@@ -1,15 +1,73 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Parent Signup</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parent Sign Up</title>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-    <h2>Parent Signup</h2>
-    <form method="post">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Signup</button>
-    </form>
-    <a href="{% url 'login' %}">Already have an account? Login</a>
+<body class="flex items-center justify-center min-h-screen bg-gray-900 relative overflow-hidden">
+    <!-- Animated Background Lights -->
+    <div class="absolute w-80 h-80 bg-purple-600 opacity-30 rounded-full blur-3xl top-20 left-10"></div>
+    <div class="absolute w-96 h-96 bg-blue-600 opacity-20 rounded-full blur-3xl bottom-10 right-10"></div>
+
+    <!-- Signup Card -->
+    <div class="relative z-10 bg-white/10 backdrop-blur-lg p-8 rounded-3xl shadow-2xl border border-white/20 text-white w-96">
+        <h2 class="text-center text-4xl font-extrabold text-white tracking-wide">Create Your Account</h2>
+        <form onsubmit="signupUser(event)" class="space-y-6 mt-6">
+            <div class="relative">
+                <input type="text" id="username" placeholder="Enter your username"
+                    class="w-full bg-transparent border-white/30 text-white placeholder-gray-300 p-3 pl-10 rounded-xl focus:ring-2 focus:ring-purple-400">
+                <span class="absolute left-3 top-3 text-gray-300">📧</span>
+            </div>
+            <div class="relative">
+                <input type="email" id="email" placeholder="Enter your email"
+                    class="w-full bg-transparent border-white/30 text-white placeholder-gray-300 p-3 pl-10 rounded-xl focus:ring-2 focus:ring-purple-400">
+                <span class="absolute left-3 top-3 text-gray-300">📧</span>
+            </div>
+            <div class="relative">
+                <input type="password" id="password1" placeholder="Enter your password"
+                    class="w-full bg-transparent border-white/30 text-white placeholder-gray-300 p-3 pl-10 rounded-xl focus:ring-2 focus:ring-purple-400">
+                <span class="absolute left-3 top-3 text-gray-300">🔒</span>
+            </div>
+            <div class="relative">
+                <input type="password" id="password2" placeholder="Confirm your password"
+                    class="w-full bg-transparent border-white/30 text-white placeholder-gray-300 p-3 pl-10 rounded-xl focus:ring-2 focus:ring-purple-400">
+                <span class="absolute left-3 top-3 text-gray-300">🔒</span>
+            </div>
+            <button type="submit" class="w-full bg-gradient-to-r from-purple-500 to-blue-500 text-white text-lg font-semibold rounded-xl py-3 hover:scale-105 transition-transform shadow-lg">Sign Up</button>
+        </form>
+        <p class="text-center text-sm text-gray-300 mt-4">Already have an account? <a href="/login/" class="text-purple-400 hover:underline">Sign In</a></p>
+    </div>
+
+    <script>
+        async function signupUser(event) {
+            event.preventDefault();
+            const username = document.getElementById("username").value;
+            const email = document.getElementById("email").value;
+            const password1 = document.getElementById("password1").value;
+            const password2 = document.getElementById("password2").value;
+
+            // Check if the passwords match
+            if (password1 !== password2) {
+                alert("Passwords do not match. Please try again.");
+                return;
+            }
+
+            const response = await fetch("/signup/", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ username, email, password1, password2 })
+            });
+
+            const data = await response.json();
+            if (response.ok) {
+                localStorage.setItem("token", data.token);
+                window.location.href = "/dashboard/";
+            } else {
+                alert("Signup failed. Please try again.");
+            }
+        }
+    </script>
 </body>
 </html>
