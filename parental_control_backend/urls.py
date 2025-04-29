@@ -36,7 +36,7 @@ urlpatterns = [
     path('', include('api.urls')),
     path('api/login/', CustomTokenObtainPairView.as_view(), name='custom_login'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
-
+#why not code push on main branch
 ]
 from django.http import HttpResponse
 
