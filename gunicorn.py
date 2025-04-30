@@ -1,7 +1,7 @@
-# gunicorn.py configuration
-bind = 'unix:/home/ec2-user/parental_control_backend/parental_control_backend.sock'
+# gunicorn.py configuration example
+bind = "127.0.0.1:8000"
 workers = 3
-worker_class = 'sync'
 timeout = 120
-accesslog = '/var/log/gunicorn/access.log'  # Ensure the access log path is correct
-errorlog = '/var/log/gunicorn/error.log'  # Ensure the error log path is correct
+loglevel = 'info'
+accesslog = '/var/log/gunicorn/access.log'
+errorlog = '/var/log/gunicorn/error.log'
