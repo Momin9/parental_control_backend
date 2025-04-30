@@ -14,24 +14,25 @@
     <!-- Signup Card -->
     <div class="relative z-10 bg-white/10 backdrop-blur-lg p-8 rounded-3xl shadow-2xl border border-white/20 text-white w-96">
         <h2 class="text-center text-4xl font-extrabold text-white tracking-wide">Create Your Account</h2>
-        <form onsubmit="signupUser(event)" class="space-y-6 mt-6">
+        <form method="POST" action="/signup/" class="space-y-6 mt-6">
+            {% csrf_token %}
             <div class="relative">
-                <input type="text" id="username" placeholder="Enter your username"
+                <input type="text" id="username" name="username" placeholder="Enter your username"
                     class="w-full bg-transparent border-white/30 text-white placeholder-gray-300 p-3 pl-10 rounded-xl focus:ring-2 focus:ring-purple-400">
                 <span class="absolute left-3 top-3 text-gray-300">📧</span>
             </div>
             <div class="relative">
-                <input type="email" id="email" placeholder="Enter your email"
+                <input type="email" id="email" name="email" placeholder="Enter your email"
                     class="w-full bg-transparent border-white/30 text-white placeholder-gray-300 p-3 pl-10 rounded-xl focus:ring-2 focus:ring-purple-400">
                 <span class="absolute left-3 top-3 text-gray-300">📧</span>
             </div>
             <div class="relative">
-                <input type="password" id="password1" placeholder="Enter your password"
+                <input type="password" id="password1" name="password1" placeholder="Enter your password"
                     class="w-full bg-transparent border-white/30 text-white placeholder-gray-300 p-3 pl-10 rounded-xl focus:ring-2 focus:ring-purple-400">
                 <span class="absolute left-3 top-3 text-gray-300">🔒</span>
             </div>
             <div class="relative">
-                <input type="password" id="password2" placeholder="Confirm your password"
+                <input type="password" id="password2" name="password2" placeholder="Confirm your password"
                     class="w-full bg-transparent border-white/30 text-white placeholder-gray-300 p-3 pl-10 rounded-xl focus:ring-2 focus:ring-purple-400">
                 <span class="absolute left-3 top-3 text-gray-300">🔒</span>
             </div>

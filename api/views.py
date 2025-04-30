@@ -68,7 +68,6 @@ class ChildCreateViewSet(viewsets.ModelViewSet):
         child.save()
         return Response({'status': 'Location updated'})
 
-
 def parent_signup(request):
     if request.method == "POST":
         form = ParentSignupForm(request.POST)
