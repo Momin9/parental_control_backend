@@ -45,7 +45,7 @@ class CustomTokenObtainPairView(TokenObtainPairView):
 
 class IsParentUser(permissions.BasePermission):
     def has_permission(self, request, view):
-        return request.user.is_authenticated and request.user.is_parent
+        return request.user.is_authenticated and (request.user.is_parent or request.user.is_child)
 
 
 class ChildCreateViewSet(viewsets.ModelViewSet):
