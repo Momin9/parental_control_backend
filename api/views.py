@@ -68,6 +68,7 @@ class ChildCreateViewSet(viewsets.ModelViewSet):
         child.save()
         return Response({'status': 'Location updated'})
 
+
 def parent_signup(request):
     if request.method == "POST":
         form = ParentSignupForm(request.POST)
@@ -124,7 +125,20 @@ class BlockedURLViewSet(viewsets.ModelViewSet):
     permission_classes = [IsParent, IsAuthenticated]
 
     def get_queryset(self):
-        return self.queryset.filter(parent=self.request.user)
+        # Get parent (the authenticated user)
+        parent = self.request.user
+
+        # Get child_id from query parameters, if provided
+        child_id = self.request.query_params.get('child_id', None)
+
+        # Start with a queryset filtered by the parent
+        queryset = BlockedURL.objects.filter(parent=parent)
+
+        if child_id:
+            # If a child_id is provided, further filter by child
+            queryset = queryset.filter(child_id=child_id)
+
+        return queryset
 
     def perform_create(self, serializer):
         serializer.save(parent=self.request.user)
