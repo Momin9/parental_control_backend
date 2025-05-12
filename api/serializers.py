@@ -1,7 +1,7 @@
+from django.contrib.auth.hashers import make_password
 from rest_framework import serializers
 
 from .models import BlockedURL, User, Child
-from django.contrib.auth.hashers import make_password
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -25,12 +25,7 @@ class BlockedURLSerializer(serializers.ModelSerializer):
     class Meta:
         model = BlockedURL
         fields = ['id', 'parent', 'child', 'url', 'blocked_at']
-
-
-class ChildLocationSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Child
-        fields = ['latitude', 'longitude', 'last_updated']
+        read_only_fields = ['parent']
 
 
 class UserPublicSerializer(serializers.ModelSerializer):
