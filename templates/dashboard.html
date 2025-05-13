@@ -6,7 +6,7 @@
     <title>Parent Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Leaflet CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"/>
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
 </head>
@@ -77,7 +77,7 @@
     async function fetchChildren() {
         const token = localStorage.getItem("token");
         const response = await fetch("/api/children/", {
-            headers: { "Authorization": `Token ${token}` }
+            headers: {"Authorization": `Token ${token}`}
         });
 
         const childrenList = document.getElementById("children-list");
@@ -94,7 +94,7 @@
 
                     let locationHTML = "Not available";
                     if (child.last_location && child.last_location.latitude && child.last_location.longitude) {
-                        const { latitude, longitude, address } = child.last_location;
+                        const {latitude, longitude, address} = child.last_location;
 
                         locationHTML = `
                             ${address ? `<div class="text-sm text-gray-400 mb-1">${address}</div>` : ""}
@@ -130,19 +130,39 @@
         document.getElementById('mapModal').classList.add('hidden');
     }
 
+    // Function to get CSRF token from cookies
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
     async function blockURL() {
         const token = localStorage.getItem("token");
         const url = document.getElementById("url").value;
         const childId = document.getElementById("child_id").value;
         const parentId = document.getElementById("parent_id").value;
 
+        // Get CSRF token from cookies
+        const csrfToken = getCookie('csrftoken');
+
         const response = await fetch("/api/blocked_urls/", {
             method: "POST",
             headers: {
                 "Authorization": `Token ${token}`,
-                "Content-Type": "application/json"
+                "Content-Type": "application/json",
+                "X-CSRFToken": csrfToken  // Include the CSRF token in the request headers
             },
-            body: JSON.stringify({ child: childId, url: url, parent: parentId })
+            body: JSON.stringify({child: childId, url: url, parent: parentId})
         });
 
         if (response.ok) {
@@ -153,6 +173,7 @@
             alert("❌ Failed to block URL: " + (errorData.detail || JSON.stringify(errorData)));
         }
     }
+
 
     function logout() {
         localStorage.removeItem("token");
