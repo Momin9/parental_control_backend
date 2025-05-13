@@ -96,10 +96,14 @@ DATABASES = {
     }
 }
 CSRF_TRUSTED_ORIGINS = [
-    "https://7fa6-14-1-107-117.ngrok-free.app"
+    "https://7fa6-14-1-107-117.ngrok-free.app",
+    "https://parentify.org",
+    "http://parentify.org",
 ]
 CORS_ALLOWED_ORIGINS = [
-    "https://7fa6-14-1-107-117.ngrok-free.app"
+    "https://7fa6-14-1-107-117.ngrok-free.app",
+    "https://parentify.org",
+    "http://parentify.org",
 ]
 
 # Password validation
