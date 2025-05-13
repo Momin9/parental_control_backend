@@ -99,11 +99,14 @@ CSRF_TRUSTED_ORIGINS = [
     "https://7fa6-14-1-107-117.ngrok-free.app",
     "https://parentify.org",
     "http://parentify.org",
+    "https://69fe-182-255-48-42.ngrok-free.app",  # New trusted origin
 ]
 CORS_ALLOWED_ORIGINS = [
     "https://7fa6-14-1-107-117.ngrok-free.app",
     "https://parentify.org",
     "http://parentify.org",
+    "https://69fe-182-255-48-42.ngrok-free.app",  # New allowed CORS origin
+
 ]
 
 # Password validation

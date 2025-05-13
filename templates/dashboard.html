@@ -55,6 +55,24 @@
             Block URL
         </button>
     </div>
+
+    <!-- Blocked URLs List Section -->
+    <div class="mt-6">
+        <h3 class="text-lg font-semibold text-purple-300">Blocked URLs</h3>
+        <table class="min-w-full text-sm text-left text-gray-300">
+            <thead class="bg-gray-800">
+                <tr>
+                    <th class="py-3 px-6">ID</th>
+                    <th class="py-3 px-6">URL</th>
+                    <th class="py-3 px-6">Blocked At</th>
+                    <th class="py-3 px-6">Actions</th>
+                </tr>
+            </thead>
+            <tbody id="blocked-urls-list" class="text-gray-300">
+                <!-- Blocked URLs will be dynamically inserted here -->
+            </tbody>
+        </table>
+    </div>
 </div>
 
 <!-- Map Modal -->
@@ -74,6 +92,7 @@
         window.location.href = "/login/";
     }
 
+    // Fetch children data
     async function fetchChildren() {
         const token = localStorage.getItem("token");
         const response = await fetch("/api/children/", {
@@ -125,11 +144,6 @@
         window.open(googleMapsURL, "_blank");
     }
 
-    function closeMapModal() {
-        // Close the modal
-        document.getElementById('mapModal').classList.add('hidden');
-    }
-
     // Function to get CSRF token from cookies
     function getCookie(name) {
         let cookieValue = null;
@@ -167,6 +181,7 @@
 
         if (response.ok) {
             alert("✅ URL Blocked Successfully");
+            fetchBlockedURLs(); // Refresh the list of blocked URLs
         } else {
             const errorData = await response.json();
             console.error("Block URL error:", errorData);
@@ -174,13 +189,107 @@
         }
     }
 
+    // Fetch and display blocked URLs
+    async function fetchBlockedURLs() {
+        const token = localStorage.getItem("token");
+        const response = await fetch("/api/blocked_urls/", {
+            headers: {"Authorization": `Token ${token}`}
+        });
 
+        const blockedUrlsList = document.getElementById("blocked-urls-list");
+        blockedUrlsList.innerHTML = "";
+
+        if (response.ok) {
+            const data = await response.json();
+            if (data.length === 0) {
+                blockedUrlsList.innerHTML = "<tr><td colspan='3' class='text-gray-300'>No blocked URLs found.</td></tr>";
+            } else {
+                data.forEach(url => {
+                    const row = document.createElement("tr");
+
+                    row.innerHTML = `
+                        <td class="py-3 px-6">${url.id}</td>
+                        <td class="py-3 px-6">${url.url}</td>
+                        <td class="py-3 px-6">${new Date(url.blocked_at).toLocaleString()}</td>
+                        <td class="py-3 px-6">
+                            <button onclick="updateBlockedURL(${url.id})"
+                                    class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-md">
+                                Update
+                            </button>
+                            <button onclick="deleteBlockedURL(${url.id})"
+                                    class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md ml-2">
+                                Delete
+                            </button>
+                        </td>
+                    `;
+                    blockedUrlsList.appendChild(row);
+                });
+            }
+        } else {
+            alert("Failed to fetch blocked URLs");
+        }
+    }
+
+    // Update Blocked URL
+    async function updateBlockedURL(id) {
+        const newUrl = prompt("Enter new URL:");
+        if (newUrl) {
+            const token = localStorage.getItem("token");
+            const csrfToken = getCookie('csrftoken');
+
+            const response = await fetch(`/api/blocked_urls/${id}/`, {
+                method: "PUT",
+                headers: {
+                    "Authorization": `Token ${token}`,
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": csrfToken
+                },
+                body: JSON.stringify({url: newUrl})
+            });
+
+            if (response.ok) {
+                alert("✅ URL Updated Successfully");
+                fetchBlockedURLs();  // Refresh the list of blocked URLs
+            } else {
+                const errorData = await response.json();
+                alert("❌ Failed to update URL: " + (errorData.detail || JSON.stringify(errorData)));
+            }
+        }
+    }
+
+    // Delete Blocked URL
+    async function deleteBlockedURL(id) {
+        const token = localStorage.getItem("token");
+        const csrfToken = getCookie('csrftoken');
+
+        const response = await fetch(`/api/blocked_urls/${id}/`, {
+            method: "DELETE",
+            headers: {
+                "Authorization": `Token ${token}`,
+                "X-CSRFToken": csrfToken
+            }
+        });
+
+        if (response.ok) {
+            alert("✅ URL Deleted Successfully");
+            fetchBlockedURLs();  // Refresh the list of blocked URLs
+        } else {
+            const errorData = await response.json();
+            alert("❌ Failed to delete URL: " + (errorData.detail || JSON.stringify(errorData)));
+        }
+    }
+
+    // Logout
     function logout() {
         localStorage.removeItem("token");
         window.location.href = "/logout/";
     }
 
-    window.onload = fetchChildren;
+    // On page load, fetch data
+    window.onload = () => {
+        fetchChildren();
+        fetchBlockedURLs();  // Also fetch blocked URLs when page loads
+    };
 </script>
 </body>
 </html>
