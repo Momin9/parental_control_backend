@@ -1,5 +1,6 @@
 from django.contrib.auth.hashers import make_password
 from rest_framework import serializers
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 from .models import BlockedURL, User, Child
 
@@ -57,3 +58,32 @@ class ChildCreateSerializer(serializers.ModelSerializer):
         parent = self.context['request'].user
         child = Child.objects.create(user=user, parent=parent, **validated_data)
         return child
+
+
+class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+    def validate(self, attrs):
+        data = super().validate(attrs)
+
+        # Add user data to the token response
+        user = self.user
+        user_data = {
+            'id': user.id,
+            'username': user.username,
+            'email': user.email,
+            'first_name': user.first_name,
+            'last_name': user.last_name,
+            'is_parent': user.is_parent,
+        }
+
+        # If the user is a child, include child-specific data
+        if user.is_child:
+            child = Child.objects.get(user=user)  # Get the related child data
+            user_data['child'] = {
+                'id': child.id,
+                'age': child.age,
+                'last_location': child.last_location
+            }
+
+        data['user'] = user_data
+
+        return data

@@ -5,38 +5,19 @@ from django.contrib.auth import login
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect
+from rest_framework import status
 from rest_framework import viewsets, permissions
 from rest_framework.authtoken.models import Token
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
 
-from api.models import BlockedURL
-from api.serializers import BlockedURLSerializer, UserSerializer, ChildCreateSerializer
+from api.serializers import BlockedURLSerializer, UserSerializer, ChildCreateSerializer, CustomTokenObtainPairSerializer
 from .forms import ParentSignupForm, ChildCreateForm
-from .models import Child
+from .models import Child, BlockedURL
 
 User = get_user_model()
-
-
-class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
-    def validate(self, attrs):
-        data = super().validate(attrs)
-
-        # Add user data to the token response
-        user = self.user
-        data['user'] = {
-            'id': user.id,
-            'username': user.username,
-            'email': user.email,
-            'first_name': user.first_name,
-            'last_name': user.last_name,
-            'is_parent': user.is_parent,
-        }
-
-        return data
 
 
 class CustomTokenObtainPairView(TokenObtainPairView):
@@ -61,7 +42,7 @@ class ChildCreateViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['post'])
     def update_location(self, request, pk=None):
-        child = self.get_object()
+        child = Child.objects.get(id=pk)
         if not child or request.data.get('location') is None:
             return Response({'message': 'Location is required', 'status': 400, 'error': True}, status=400)
         child.last_location = request.data.get('location', {})
@@ -111,18 +92,10 @@ def create_child(request):
     return render(request, "create_child.html", {"form": form})
 
 
-class IsParent(permissions.BasePermission):
-    def has_permission(self, request, view):
-        return request.user.is_authenticated and request.user.is_parent
-
-
-# ViewSets
-
-
 class BlockedURLViewSet(viewsets.ModelViewSet):
     queryset = BlockedURL.objects.all()
     serializer_class = BlockedURLSerializer
-    permission_classes = [IsParent, IsAuthenticated]
+    permission_classes = [IsParentUser, IsAuthenticated]
 
     def get_queryset(self):
         # Get parent (the authenticated user)
@@ -138,10 +111,46 @@ class BlockedURLViewSet(viewsets.ModelViewSet):
             # If a child_id is provided, further filter by child
             queryset = queryset.filter(child_id=child_id)
 
+        if self.request.user.is_child:
+            child_id = Child.objects.get(user=self.request.user)
+            queryset = BlockedURL.objects.filter(child_id=child_id)
+
         return queryset
 
     def perform_create(self, serializer):
         serializer.save(parent=self.request.user)
+
+    def update(self, request, *args, **kwargs):
+        # Custom handling for PUT (full update)
+        try:
+            blocked_url = BlockedURL.objects.filter(id=kwargs['pk']).first()  # Corrected here: use `objects.filter`
+            if not blocked_url:
+                return Response({'detail': 'Blocked URL not found.'}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({'detail': f'Error: {str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # You can add custom logic to update based on `id` here
+        serializer = self.get_serializer(blocked_url, data=request.data, partial=False)  # Full update (not partial)
+        if serializer.is_valid():
+            serializer.save()  # Save the updated object
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def partial_update(self, request, *args, **kwargs):
+        # Custom handling for PATCH (partial update)
+        try:
+            blocked_url = BlockedURL.objects.filter(id=kwargs['pk']).first()  # Corrected here: use `objects.filter`
+            if not blocked_url:
+                return Response({'detail': 'Blocked URL not found.'}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({'detail': f'Error: {str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # You can add custom logic to update based on `id` here
+        serializer = self.get_serializer(blocked_url, data=request.data, partial=True)  # Partial update
+        if serializer.is_valid():
+            serializer.save()  # Save the updated object
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 # Authentication Views

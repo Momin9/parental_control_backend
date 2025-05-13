@@ -37,8 +37,8 @@ class Child(models.Model):
 
 
 class BlockedURL(models.Model):
-    parent = models.ForeignKey(User, on_delete=models.CASCADE, related_name='blocked_urls')
-    child = models.ForeignKey(Child, on_delete=models.CASCADE, related_name='blocked_urls')
+    parent = models.ForeignKey(User, on_delete=models.CASCADE, related_name='parent_blocked_urls')
+    child = models.ForeignKey(Child, on_delete=models.CASCADE, related_name='child_blocked_urls')
     url = models.URLField()
     blocked_at = models.DateTimeField(default=now)
 
