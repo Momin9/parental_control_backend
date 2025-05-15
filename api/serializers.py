@@ -87,3 +87,9 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         data['user'] = user_data
 
         return data
+
+
+
+class URLCheckSerializer(serializers.Serializer):
+    url = serializers.URLField()
+    child_id = serializers.IntegerField()

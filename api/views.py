@@ -11,11 +11,13 @@ from rest_framework.authtoken.models import Token
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
+from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView
 
 from api.serializers import BlockedURLSerializer, UserSerializer, ChildCreateSerializer, CustomTokenObtainPairSerializer
 from .forms import ParentSignupForm, ChildCreateForm
 from .models import Child, BlockedURL
+from .serializers import URLCheckSerializer
 
 User = get_user_model()
 
@@ -48,6 +50,19 @@ class ChildCreateViewSet(viewsets.ModelViewSet):
         child.last_location = request.data.get('location', {})
         child.save()
         return Response({'status': 'Location updated'})
+
+    def destroy(self, request, *args, **kwargs):
+        # Override the delete method to check if the child belongs to the request user (parent)
+        child = self.get_object()  # This will get the child based on the primary key (pk)
+
+        # Check if the request user is the parent of the child
+        if child.parent != request.user:
+            return Response({'message': 'Not your child. You can only delete your own child.'},
+                            status=status.HTTP_403_FORBIDDEN)
+
+        # If the parent is correct, proceed with deletion
+        self.perform_destroy(child)
+        return Response({'status': 'Child deleted successfully'}, status=status.HTTP_204_NO_CONTENT)
 
 
 def parent_signup(request):
@@ -150,6 +165,31 @@ class BlockedURLViewSet(viewsets.ModelViewSet):
         if serializer.is_valid():
             serializer.save()  # Save the updated object
             return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class URLCheckView(APIView):
+    def post(self, request):
+        # Validate the data
+        serializer = URLCheckSerializer(data=request.data)
+        if serializer.is_valid():
+            url = serializer.validated_data['url']
+            child_id = serializer.validated_data['child_id']
+
+            try:
+                # Get the child object based on child_id
+                child = Child.objects.get(id=child_id)
+            except Child.DoesNotExist:
+                return Response({'error': 'Child not found'}, status=status.HTTP_404_NOT_FOUND)
+
+            # Check if the URL is blocked for this child
+            blocked_url_exists = BlockedURL.objects.filter(child=child, url=url).exists()
+
+            if blocked_url_exists:
+                return Response({'result': True}, status=status.HTTP_200_OK)
+            else:
+                return Response({'result': False}, status=status.HTTP_200_OK)
+
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
