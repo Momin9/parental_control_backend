@@ -62,7 +62,7 @@ class ChildCreateViewSet(viewsets.ModelViewSet):
 
         # If the parent is correct, proceed with deletion
         self.perform_destroy(child)
-        return Response({'status': 'Child deleted successfully'}, status=status.HTTP_204_NO_CONTENT)
+        return Response({'status': 'Child deleted successfully'}, status=status.HTTP_200_OK)
 
 
 def parent_signup(request):
